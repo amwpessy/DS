@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全市网络零售数据看板</title>
+<style>
+  :root{
+    --bg:#f5f7fa;--card:#ffffff;--ink:#1f2933;--sub:#6b7280;--line:#e5e7eb;
+    --up:#e23c2e;--accent:#2f6fed;--accent2:#11a87b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--ink);padding:28px 20px 48px;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1120px;margin:0 auto}
+  header{margin-bottom:20px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  header h1{font-size:26px;font-weight:700;letter-spacing:.5px}
+  header p{color:var(--sub);margin-top:6px;font-size:14px}
+
+  .toggle{display:inline-flex;background:#eaeef5;border-radius:10px;padding:4px}
+  .toggle button{border:0;background:transparent;color:var(--sub);font-size:14px;font-weight:600;
+    padding:8px 18px;border-radius:8px;cursor:pointer;transition:.15s;font-family:inherit}
+  .toggle button.active{background:#fff;color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+
+  .hero{background:linear-gradient(135deg,#2f6fed 0%,#5b8def 100%);color:#fff;border-radius:16px;
+    padding:26px 28px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;
+    box-shadow:0 8px 24px rgba(47,111,237,.25);}
+  .hero .label{font-size:14px;opacity:.9}
+  .hero .value{font-size:42px;font-weight:800;line-height:1.1;margin-top:6px}
+  .hero .value small{font-size:18px;font-weight:600;opacity:.9}
+  .hero .right{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+  .hero .yoy{background:rgba(255,255,255,.18);border-radius:12px;padding:10px 16px;font-size:15px;
+    display:flex;align-items:center;gap:8px}
+  .hero .yoy b{font-size:22px}
+  .hero .note{background:rgba(255,255,255,.16);border-radius:20px;padding:5px 14px;font-size:13px;font-weight:600}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:22px}
+  .card{background:var(--card);border-radius:14px;padding:20px 22px;box-shadow:0 2px 10px rgba(0,0,0,.04);border:1px solid var(--line)}
+  .card h2{font-size:16px;font-weight:700;margin-bottom:4px}
+  .card .sub{color:var(--sub);font-size:12.5px;margin-bottom:14px}
+
+  /* 柱状图（纯 CSS） */
+  .bars{display:flex;align-items:flex-end;gap:14px;height:300px;padding-top:24px}
+  .bar-item{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end}
+  .bar-val{font-size:13px;font-weight:700;margin-bottom:6px}
+  .bar-track{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center}
+  .bar-fill{width:62%;max-width:54px;border-radius:6px 6px 0 0;transition:height .5s ease;
+    box-shadow:inset 0 -2px 0 rgba(0,0,0,.06)}
+  .bar-name{font-size:11.5px;color:var(--sub);margin-top:8px;text-align:center;line-height:1.3;height:30px}
+  .bar-yoy{margin-top:5px;color:#fff;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:20px}
+
+  /* 环形图（SVG） */
+  .donut-wrap{display:flex;align-items:center;gap:28px;flex-wrap:wrap;justify-content:center}
+  .donut-legend{font-size:13px}
+  .donut-legend div{display:flex;align-items:center;gap:8px;margin:6px 0}
+  .donut-legend .dot{width:11px;height:11px;border-radius:3px;flex:none}
+  .donut-legend .lg-name{flex:1}
+  .donut-legend .lg-val{font-weight:600;font-variant-numeric:tabular-nums}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:4px}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--sub);font-weight:600;font-size:12.5px}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  .tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;color:#fff;background:var(--up)}
+  .tag.low{background:#f0a500}
+  .tag.flat{background:#9aa3af}
+
+  footer{margin-top:26px;color:var(--sub);font-size:12px;text-align:center}
+  @media (max-width:760px){.grid{grid-template-columns:1fr}.hero .value{font-size:34px}.bars{height:260px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>全市网络零售数据看板</h1>
+      <p>数据来源：全市网络零售监测 · 单位：亿元</p>
+    </div>
+    <div class="toggle" id="toggle">
+      <button data-key="h1" class="active">上半年</button>
+      <button data-key="m5">1-5月</button>
+      <button data-key="m4">1-4月</button>
+      <button data-key="m3">1-3月</button>
+      <button data-key="m2">1-2月</button>
+      <button data-key="m1">1月</button>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div>
+      <div class="label" id="heroLabel">上半年全市网络零售总额</div>
+      <div class="value"><span id="heroVal">106.6</span> <small>亿元</small></div>
+    </div>
+    <div class="right">
+      <div class="yoy"><span>同比增长</span><b id="heroYoy">↑ 37.7%</b></div>
+      <div class="note" id="heroNote" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>分品类网络零售额</h2>
+      <div class="sub">柱高为零售额，标签为同比增速</div>
+      <div class="bars" id="catBars"></div>
+    </div>
+
+    <div class="card">
+      <h2>分县区网络零售额</h2>
+      <div class="sub">柱高为零售额，标签为同比增速</div>
+      <div class="bars" id="areaBars"></div>
+    </div>
+
+    <div class="card">
+      <h2>品类结构占比</h2>
+      <div class="sub">当期总额中的品类份额</div>
+      <div class="donut-wrap">
+        <svg id="donut" width="270" height="270" viewBox="0 0 180 180"></svg>
+        <div class="donut-legend" id="donutLegend"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>数据明细</h2>
+      <div class="sub">零售额 / 同比增速</div>
+      <table>
+        <thead><tr><th>品类</th><th style="text-align:right">零售额(亿元)</th><th style="text-align:right">同比</th></tr></thead>
+        <tbody id="catTable"></tbody>
+      </table>
+      <table style="margin-top:14px">
+        <thead><tr><th>县区</th><th style="text-align:right">零售额(亿元)</th><th style="text-align:right">同比</th></tr></thead>
+        <tbody id="areaTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>注：增长按中国习惯以红色标注；本页为纯离线页面，无需联网即可查看。可切换不同统计周期。</footer>
+</div>
+
+<script>
+const periods = {
+  h1:{
+    label:'上半年全市网络零售总额', total:106.6, yoy:37.7, note:'增速全省第6',
+    cat:[
+      {name:'金银珠宝首饰', val:46.9, yoy:24.7},
+      {name:'服装鞋帽针纺织品', val:15.6, yoy:103.7},
+      {name:'日用品', val:6.52, yoy:50.1},
+      {name:'粮油食品', val:6.0, yoy:19.3},
+      {name:'家用电器音像器材', val:4.1, yoy:8.0},
+    ],
+    area:[
+      {name:'海丰县', val:68.4, yoy:33.9},
+      {name:'陆丰市', val:21.5, yoy:37.3},
+      {name:'市城区', val:13.9, yoy:56.1},
+      {name:'陆河县', val:2.8, yoy:58.4},
+    ],
+  },
+  m1:{
+    label:'1月全市网络零售总额', total:15.7, yoy:49.6, note:'同比增速全省第2',
+    cat:[
+      {name:'金银珠宝首饰', val:5.8, yoy:41.2},
+      {name:'服装鞋帽针纺织品', val:3.1, yoy:230.6},
+      {name:'日用品', val:0.9, yoy:51.0},
+      {name:'粮油食品', val:1.1, yoy:15.0},
+      {name:'家用电器音像器材', val:0.8, yoy:33.9},
+    ],
+    area:[
+      {name:'海丰县', val:9.1, yoy:37.6},
+      {name:'陆丰市', val:3.8, yoy:66.4},
+      {name:'市城区', val:2.4, yoy:78.8},
+      {name:'陆河县', val:0.4, yoy:60.1},
+    ],
+  },
+  m2:{
+    label:'1-2月全市网络零售总额', total:28.4, yoy:48.1, note:'同比增速全省第2',
+    cat:[
+      {name:'金银珠宝首饰', val:10.7, yoy:40.4},
+      {name:'服装鞋帽针纺织品', val:5.1, yoy:208.0},
+      {name:'日用品', val:1.6, yoy:45.0},
+      {name:'粮油食品', val:1.8, yoy:-0.9},
+      {name:'家用电器音像器材', val:1.4, yoy:33.0},
+    ],
+    area:[
+      {name:'海丰县', val:16.5, yoy:41.2},
+      {name:'陆丰市', val:6.8, yoy:51.4},
+      {name:'市城区', val:4.3, yoy:73.2},
+      {name:'陆河县', val:0.8, yoy:54.7},
+    ],
+  },
+  m3:{
+    label:'1-3月全市网络零售总额', total:47.3, yoy:56.0, note:'同比增速全省第1',
+    cat:[
+      {name:'金银珠宝首饰', val:19.4, yoy:51.7},
+      {name:'服装鞋帽针纺织品', val:7.4, yoy:158.5},
+      {name:'日用品', val:2.7, yoy:47.7},
+      {name:'粮油食品', val:2.7, yoy:1.5},
+      {name:'家用电器音像器材', val:2.0, yoy:33.4},
+    ],
+    area:[
+      {name:'海丰县', val:29.0, yoy:54.3},
+      {name:'陆丰市', val:10.4, yoy:51.8},
+      {name:'市城区', val:6.6, yoy:70.8},
+      {name:'陆河县', val:1.3, yoy:58.5},
+    ],
+  },
+  m4:{
+    label:'1-4月全市网络零售总额', total:64.9, yoy:54.8, note:'同比增速全省第一',
+    cat:[
+      {name:'金银珠宝首饰', val:27.5, yoy:53.5},
+      {name:'服装鞋帽针纺织品', val:9.9, yoy:133.4},
+      {name:'日用品', val:3.8, yoy:52.8},
+      {name:'粮油食品', val:3.5, yoy:6.2},
+      {name:'家用电器音像器材', val:2.6, yoy:27.3},
+    ],
+    area:[
+      {name:'海丰县', val:40.4, yoy:54.4},
+      {name:'陆丰市', val:13.9, yoy:49.0},
+      {name:'市城区', val:8.8, yoy:65.5},
+      {name:'陆河县', val:1.7, yoy:60.7},
+    ],
+  },
+  m5:{
+    label:'1-5月全市网络零售总额', total:83.9, yoy:48.6, note:'同比增速全省第二',
+    cat:[
+      {name:'金银珠宝首饰', val:36.5, yoy:43.9},
+      {name:'服装鞋帽针纺织品', val:12.5, yoy:116.6},
+      {name:'日用品', val:5.0, yoy:48.9},
+      {name:'粮油食品', val:4.4, yoy:5.6},
+      {name:'家用电器音像器材', val:3.2, yoy:22.4},
+    ],
+    area:[
+      {name:'海丰县', val:53.1, yoy:47.3},
+      {name:'陆丰市', val:17.3, yoy:44.8},
+      {name:'市城区', val:11.2, yoy:59.8},
+      {name:'陆河县', val:2.2, yoy:58.5},
+    ],
+  }
+};
+
+const upColor = '#e23c2e';
+function yoyStyle(y){
+  if(y < 0) return {color:'#3b6fb0', sign:'↓'};          // 同比下降：蓝
+  return {color: y>=30 ? upColor : (y>=15 ? '#f0a500' : '#9aa3af'), sign:'↑'};
+}
+const donutColors = ['#e23c2e','#2f6fed','#11a87b','#f0a500','#8b5cf6'];
+// 按品类固定配色，确保各月份与上半年外观一致
+const catColor = {
+  '金银珠宝首饰':'#e23c2e',
+  '服装鞋帽针纺织品':'#2f6fed',
+  '日用品':'#11a87b',
+  '粮油食品':'#f0a500',
+  '家用电器音像器材':'#8b5cf6'
+};
+const fmt = n => n.toFixed(2);
+
+function renderBars(elId, rows){
+  const el = document.getElementById(elId);
+  const max = Math.max(...rows.map(r=>r.val));
+  el.innerHTML = rows.map(r=>{
+    const h = (r.val/max*100).toFixed(1);
+    const s = yoyStyle(r.yoy);
+    return `<div class="bar-item">
+      <div class="bar-val">${fmt(r.val)}</div>
+      <div class="bar-track"><div class="bar-fill" style="height:${h}%;background:${s.color}"></div></div>
+      <div class="bar-name">${r.name}</div>
+      <div class="bar-yoy" style="background:${s.color}">${s.sign}${r.yoy}%</div>
+    </div>`;
+  }).join('');
+}
+
+function renderDonut(rows, total){
+  const svg = document.getElementById('donut');
+  const legend = document.getElementById('donutLegend');
+  total = total || rows.reduce((s,r)=>s+r.val,0);  // 当期全市网络零售总额
+  const sumCat = rows.reduce((s,r)=>s+r.val,0);
+  const other = Math.max(0, total - sumCat);        // 未列明的其余品类
+  const data = rows.concat([{name:'其他', val:other}]);
+  const cx=90, cy=90, r=68, C=2*Math.PI*r;
+  let acc=0;
+  let arcs = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#eef1f5" stroke-width="22"/>`;
+  data.forEach((row,i)=>{
+    const frac = row.val/total;
+    const len = frac*C;
+    const color = row.name==='其他' ? '#cbd2dc' : (catColor[row.name] || donutColors[i % donutColors.length]);
+    arcs += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="22"
+      stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-acc}"
+      transform="rotate(-90 ${cx} ${cy})" stroke-linecap="butt"/>`;
+    acc += len;
+  });
+  // 环内中心文字
+  arcs += `<text x="${cx}" y="${cy-3}" text-anchor="middle" font-size="20" font-weight="800" fill="#1f2933">${fmt(total)}</text>`;
+  arcs += `<text x="${cx}" y="${cy+15}" text-anchor="middle" font-size="11" fill="#6b7280">亿元</text>`;
+  svg.innerHTML = arcs;
+
+  legend.innerHTML = data.map((row,i)=>{
+    const p = (row.val/total*100).toFixed(1);
+    const color = row.name==='其他' ? '#cbd2dc' : (catColor[row.name] || donutColors[i % donutColors.length]);
+    return `<div><span class="dot" style="background:${color}"></span>
+      <span class="lg-name">${row.name}</span>
+      <span class="lg-val">${fmt(row.val)} (${p}%)</span></div>`;
+  }).join('');
+}
+
+function fillTable(tbodyId, rows){
+  const tb = document.getElementById(tbodyId);
+  tb.innerHTML = rows.map(r=>{
+    const s = yoyStyle(r.yoy);
+    return `<tr><td>${r.name}</td><td class="num">${fmt(r.val)}</td>
+      <td class="num"><span class="tag" style="background:${s.color}">${s.sign}${r.yoy}%</span></td></tr>`;
+  }).join('');
+}
+
+function render(key){
+  const cur = periods[key];
+  document.getElementById('heroLabel').textContent = cur.label;
+  document.getElementById('heroVal').textContent = fmt(cur.total);
+  document.getElementById('heroYoy').textContent = '↑ ' + cur.yoy + '%';
+  const note = document.getElementById('heroNote');
+  if(cur.note){ note.style.display='block'; note.textContent = cur.note; }
+  else { note.style.display='none'; }
+
+  renderBars('catBars', cur.cat);
+  renderBars('areaBars', cur.area);
+  renderDonut(cur.cat, cur.total);
+  fillTable('catTable', cur.cat);
+  fillTable('areaTable', cur.area);
+
+  document.querySelectorAll('#toggle button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.key===key);
+  });
+}
+
+document.querySelectorAll('#toggle button').forEach(b=>{
+  b.addEventListener('click', ()=>render(b.dataset.key));
+});
+
+render('h1');
+</script>
+</body>
+</html>
