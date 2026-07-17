@@ -155,7 +155,7 @@ const periods = {
     ],
   },
   m1:{
-    label:'1月全市网络零售总额', total:15.7, yoy:49.6, note:'同比增速全省第2',
+    label:'1月全市网络零售总额', total:15.7, yoy:49.6, note:'增速全省第2',
     cat:[
       {name:'金银珠宝首饰', val:5.8, yoy:41.2},
       {name:'服装鞋帽针纺织品', val:3.1, yoy:230.6},
@@ -171,7 +171,7 @@ const periods = {
     ],
   },
   m2:{
-    label:'1-2月全市网络零售总额', total:28.4, yoy:48.1, note:'同比增速全省第2',
+    label:'1-2月全市网络零售总额', total:28.4, yoy:48.1, note:'增速全省第2',
     cat:[
       {name:'金银珠宝首饰', val:10.7, yoy:40.4},
       {name:'服装鞋帽针纺织品', val:5.1, yoy:208.0},
@@ -187,7 +187,7 @@ const periods = {
     ],
   },
   m3:{
-    label:'1-3月全市网络零售总额', total:47.3, yoy:56.0, note:'同比增速全省第1',
+    label:'1-3月全市网络零售总额', total:47.3, yoy:56.0, note:'增速全省第1',
     cat:[
       {name:'金银珠宝首饰', val:19.4, yoy:51.7},
       {name:'服装鞋帽针纺织品', val:7.4, yoy:158.5},
@@ -203,7 +203,7 @@ const periods = {
     ],
   },
   m4:{
-    label:'1-4月全市网络零售总额', total:64.9, yoy:54.8, note:'同比增速全省第一',
+    label:'1-4月全市网络零售总额', total:64.9, yoy:54.8, note:'增速全省第1',
     cat:[
       {name:'金银珠宝首饰', val:27.5, yoy:53.5},
       {name:'服装鞋帽针纺织品', val:9.9, yoy:133.4},
@@ -219,7 +219,7 @@ const periods = {
     ],
   },
   m5:{
-    label:'1-5月全市网络零售总额', total:83.9, yoy:48.6, note:'同比增速全省第二',
+    label:'1-5月全市网络零售总额', total:83.9, yoy:48.6, note:'增速全省第2',
     cat:[
       {name:'金银珠宝首饰', val:36.5, yoy:43.9},
       {name:'服装鞋帽针纺织品', val:12.5, yoy:116.6},
@@ -250,7 +250,7 @@ const catColor = {
   '粮油食品':'#f0a500',
   '家用电器音像器材':'#8b5cf6'
 };
-const fmt = n => n.toFixed(2);
+const fmt = n => n.toFixed(1);
 
 function renderBars(elId, rows){
   const el = document.getElementById(elId);
@@ -262,7 +262,7 @@ function renderBars(elId, rows){
       <div class="bar-val">${fmt(r.val)}</div>
       <div class="bar-track"><div class="bar-fill" style="height:${h}%;background:${s.color}"></div></div>
       <div class="bar-name">${r.name}</div>
-      <div class="bar-yoy" style="background:${s.color}">${s.sign}${r.yoy}%</div>
+      <div class="bar-yoy" style="background:${s.color}">${s.sign}${r.yoy.toFixed(1)}%</div>
     </div>`;
   }).join('');
 }
@@ -305,7 +305,7 @@ function fillTable(tbodyId, rows){
   tb.innerHTML = rows.map(r=>{
     const s = yoyStyle(r.yoy);
     return `<tr><td>${r.name}</td><td class="num">${fmt(r.val)}</td>
-      <td class="num"><span class="tag" style="background:${s.color}">${s.sign}${r.yoy}%</span></td></tr>`;
+      <td class="num"><span class="tag" style="background:${s.color}">${s.sign}${r.yoy.toFixed(1)}%</span></td></tr>`;
   }).join('');
 }
 
@@ -313,7 +313,7 @@ function render(key){
   const cur = periods[key];
   document.getElementById('heroLabel').textContent = cur.label;
   document.getElementById('heroVal').textContent = fmt(cur.total);
-  document.getElementById('heroYoy').textContent = '↑ ' + cur.yoy + '%';
+  document.getElementById('heroYoy').textContent = '↑ ' + cur.yoy.toFixed(1) + '%';
   const note = document.getElementById('heroNote');
   if(cur.note){ note.style.display='block'; note.textContent = cur.note; }
   else { note.style.display='none'; }
